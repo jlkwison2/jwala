@@ -1,6 +1,7 @@
 package com.cerner.jwala.persistence.jpa.domain;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -36,6 +37,7 @@ public class JpaSpringBootApp  extends AbstractEntity<JpaSpringBootApp> {
     private String archiveFile;
 
     @OneToOne (targetEntity = JpaMedia.class)
+    @JsonDeserialize(using = JpaMediaDeserializer.class)
     private JpaMedia jdkMedia;
 
     @Override

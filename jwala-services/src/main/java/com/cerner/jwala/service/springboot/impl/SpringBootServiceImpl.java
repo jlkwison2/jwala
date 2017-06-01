@@ -4,6 +4,7 @@ import com.cerner.jwala.common.FileUtility;
 import com.cerner.jwala.common.domain.model.springboot.SpringBootApp;
 import com.cerner.jwala.common.properties.ApplicationProperties;
 import com.cerner.jwala.common.properties.PropertyKeys;
+import com.cerner.jwala.dao.MediaDao;
 import com.cerner.jwala.dao.SpringBootAppDao;
 import com.cerner.jwala.persistence.jpa.domain.JpaMedia;
 import com.cerner.jwala.persistence.jpa.domain.JpaSpringBootApp;
@@ -37,6 +38,9 @@ public class SpringBootServiceImpl implements SpringBootService {
 
     @Autowired
     private SpringBootAppDao springBootAppDao;
+
+    @Autowired
+    private MediaDao mediaDao;
 
     @Autowired
     @Qualifier("mediaRepositoryService")
@@ -110,6 +114,12 @@ public class SpringBootServiceImpl implements SpringBootService {
     @Transactional
     public JpaSpringBootApp update(JpaSpringBootApp springBootApp) {
         LOGGER.info("Update Spring Boot service {}", springBootApp);
+
+        final JpaSpringBootApp tempSpringBootApp = springBootAppDao.findById(springBootApp.getId());
+        springBootApp.setArchiveFile(tempSpringBootApp.getArchiveFile());
+        springBootApp.setArchiveFilename(tempSpringBootApp.getArchiveFilename());
+        springBootApp.setJdkMedia(mediaDao.findById(springBootApp.getJdkMedia().getId()));
+
         return springBootAppDao.update(springBootApp);
     }
 

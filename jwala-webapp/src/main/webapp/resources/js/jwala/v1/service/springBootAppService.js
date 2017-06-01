@@ -11,10 +11,10 @@ var springBootAppService = {
     createSpringBootApp: function(formData) {
         return serviceFoundation.promisedPost("v1.0/springboot", "json", formData, null, true, false);
     },
-    updateMedia: function(serializedArray) {
+    updateSpringBootApp: function(serializedArray) {
         var jsonData = {};
         serializedArray.forEach(function(item){
-            jsonData``[item.name] = item.value;
+            jsonData[item.name] = item.value;
         });
         return serviceFoundation.promisedPut("v1.0/springboot", "json", JSON.stringify(jsonData));
     },

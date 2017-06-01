@@ -14,7 +14,7 @@ var SpringBootAppConfig = React.createClass({
                    <RDataTable ref="dataTable"
                                tableIndex="id"
                                colDefinitions={[{key: "id", isVisible: false},
-                                                {title: "Name", key: "name", renderCallback: this.mediaNameRenderCallback},
+                                                {title: "Name", key: "name", renderCallback: this.springBootAppNameRenderCallback},
                                                 {title: "Hosts", key: "hostNames"},
                                                 {title: "Jar or War File", key: "archiveFilename"},
                                                 {title: "JDK", key: "jdkMedia.name"}]}
@@ -112,24 +112,22 @@ var SpringBootAppConfig = React.createClass({
             $.errorAlert(JSON.parse(response.responseText).message);
         });
     },
-    mediaNameRenderCallback: function(name, media) {
+    springBootAppNameRenderCallback: function(name, springBootApp) {
         var self = this;
-        return <button className="button-link" onClick={function(){self.onClickSpringBootAppNameLink(jpaSpringBootApp.id)}}>{name}</button>
+        return <button className="button-link" onClick={function(){self.onClickSpringBootAppNameLink(springBootApp.id)}}>{name}</button>
     },
     onClickSpringBootAppNameLink: function(id) {
         var self = this;
-//        springBootAppService.getSpringBootAppById(id).then((function(response){
-//                                                var formData = {};
-//                                                formData["id"] = response.applicationResponseContent.id;
-//                                                formData["name"] = response.applicationResponseContent.name;
-//                                                formData["localPath"] = response.applicationResponseContent.localPath;
-//                                                formData["type"] = response.applicationResponseContent.type;
-//                                                formData["remoteDir"] = response.applicationResponseContent.remoteDir;
-//                                                formData["rootDir"] = response.applicationResponseContent.mediaDir;
-//                                                self.refs.modalEditMediaDlg.show("Edit Media", <MediaConfigForm formData={formData}/>);
-//                                           })).caught(
-//                                                function(response){$.errorAlert(response)
-//                                           });
+        springBootAppService.getSpringBootAppById(id).then((function(response){
+                                                var formData = {};
+                                                formData["id"] = response.applicationResponseContent[0].id;
+                                                formData["name"] = response.applicationResponseContent[0].name;
+                                                formData["hostNames"] = response.applicationResponseContent[0].hostNames;
+                                                formData["jdkMedia"] = response.applicationResponseContent[0].jdkMedia;
+                                                self.refs.modalEditSpringBootAppDlg.show("Edit SpringBoot App", <SpringBootAppConfigForm formData={formData}/>);
+                                           })).caught(
+                                                function(response){$.errorAlert(response)
+                                           });
     }
 })
 
@@ -140,14 +138,9 @@ var SpringBootAppConfigForm = React.createClass({
     getInitialState: function() {
         var name = this.props.formData && this.props.formData.name ? this.props.formData.name : null;
         var hostNames = this.props.formData && this.props.formData.hostNames ? this.props.formData.hostNames : null;
-        var archiveFilename = this.props.formData && this.props.formData.archiveFilename ? this.props.formData.archiveFilename : null;
+        var jdkMedia = this.props.formData && this.props.formData.jdkMedia ? this.props.formData.jdkMedia : null;
 
-//        var type = this.props.formData && this.props.formData.type ? this.props.formData.type.name : null;
-//        var localPath = this.props.formData && this.props.formData.localPath ? this.props.formData.localPath : null;
-//        var remoteDir = this.props.formData && this.props.formData.remoteDir ? this.props.formData.remoteDir : null;
-//        var rootDir = this.props.formData && this.props.formData.rootDir ? this.props.formData.rootDir : null;
-
-        return {name: name, hostNames: hostNames, archiveFilename: "", archiveFile: null, jdkMedia: null, showUploadBusy: false, jdkVersions: []};
+        return {name: name, hostNames: hostNames, archiveFilename: "", archiveFile: null, jdkMedia: jdkMedia, showUploadBusy: false, jdkVersions: []};
     },
     render: function() {
         var idTextHidden = null;
@@ -194,7 +187,6 @@ var SpringBootAppConfigForm = React.createClass({
     getJdkVersions: function() {
         var items = [<option key='no-jdk-version' value=''>--- Select JDK ---</option>];
         for (var i=0; i < this.state.jdkVersions.length; i++){
-            console.log(this.state.jdkVersions[i]);
             var jdkVersionOption = this.state.jdkVersions[i];
             var selected = this.state.jdkMedia !== null && jdkVersionOption.id === this.state.jdkMedia.id;
             items.push(<option key={"jdk-version-" + jdkVersionOption.id} selected={selected}
