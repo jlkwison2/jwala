@@ -63,10 +63,12 @@ var ServerTable = React.createClass({
     servers: null,
     render: function() {
         this.servers = this.props.selectedApp.hostNames.split(",");
+        let appName = this.props.selectedApp.name;
         let trArray = [];
+        let self = this;
         this.servers.forEach(function(server){
             trArray.push(<tr>
-                           <td><ToggleButton on={true}/></td>
+                           <td><ToggleButton ref={server + "_toggle"} on={null} server={server} onClick={self.onToggleButtonClick.bind(self, appName, server)}/></td>
                            <td>{server}</td>
                            <td>8080</td>
                            <td>10.142.0.2</td>
@@ -83,6 +85,25 @@ var ServerTable = React.createClass({
                   </tbody>
               </table>
     },
+    onToggleButtonClick: function(name, server, on) {
+        console.log(on);
+        console.log(name);
+        console.log(server);
+
+        if (on) {
+            springBootAppService.startSpringBootApp(name, server).then(function(response){
+
+            }).caught(function(err){
+
+            });
+            return;
+        }
+
+        springBootAppService.stopSpringBootApp(name, server).then(function(response){
+        }).caught(function(err){
+        });
+
+    },
     componentDidMount: function() {
         this.timeoutHandler = setTimeout(this.timeoutCallback, 500);
         console.log("Timeout " + this.timeoutHandler + " created");
@@ -92,13 +113,13 @@ var ServerTable = React.createClass({
         let self = this;
         self.servers.forEach(function(server){
             let url = "http://" + server + ":8080/"
-            console.log("pinging " + url + "...");
             springBootAppService.getUrlResponse(url).then(function(response){
-                console.log(response);
                 $("#" + server + "_status").css("color", "green");
+                self.refs[server + "_toggle"].setOn(true);
             }).caught(function(err){
                 console.log(err);
                 $("#" + server + "_status").css("color", "red");
+                self.refs[server + "_toggle"].setOn(false);
             }).lastly(function(){
                 self.timeoutHandler = setTimeout(self.timeoutCallback, 5000);
             });
@@ -113,19 +134,35 @@ var ServerTable = React.createClass({
 
 var ToggleButton = React.createClass({
     getInitialState: function() {
-        return {on: !this.props.on ? false : true};
+        // return {on: !this.props.on ? false : true};
+        return {on: this.props.on, disabled: false};
     },
     render: function() {
+        if (this.state.on === null) {
+            return <span>. . .</span>;
+        }
+
         if (this.state.on) {
             return <i className="fa fa-toggle-on" aria-hidden="true" onClick={this.onClick}/>
         }
         return <i className="fa fa-toggle-off" aria-hidden="true" onClick={this.onClick}/>
     },
     onClick: function() {
-        this.setState({on: !this.state.on});
+        let on = !this.state.on;
+        this.setState({on: on});
         if (this.props.onClick) {
-            this.props.onClick();
+            this.props.onClick(on);
         }
+    },
+
+    setOn: function(on) {
+        if (this.state.on === null) {
+            this.setState({on: on});
+        }
+    },
+
+    disable: function(val) {
+        this.state.disabled(val);
     }
 })
 

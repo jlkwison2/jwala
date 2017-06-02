@@ -23,5 +23,11 @@ var springBootAppService = {
     },
     getUrlResponse: function(url) {
         return serviceFoundation.promisedGet("v1.0/springboot/url?val=" + encodeURIComponent(url), "json");
+    },
+    startSpringBootApp: function(name, host) {
+        return serviceFoundation.promisedPut("v1.0/springboot/control/" + encodeURIComponent(name) + "/START/" + host);
+    },
+    stopSpringBootApp: function(name, host) {
+        return serviceFoundation.promisedPut("v1.0/springboot/control/" + encodeURIComponent(name) + "/STOP/" + host);
     }
 };
