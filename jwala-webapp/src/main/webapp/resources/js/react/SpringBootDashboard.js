@@ -59,16 +59,18 @@ var RightPanel = React.createClass({
 });
 
 var ServerTable = React.createClass({
+    timeoutHandler: null,
+    servers: null,
     render: function() {
-        let servers = this.props.selectedApp.hostNames.split(",");
+        this.servers = this.props.selectedApp.hostNames.split(",");
         let trArray = [];
-        servers.forEach(function(server){
+        this.servers.forEach(function(server){
             trArray.push(<tr>
                            <td><ToggleButton on={true}/></td>
                            <td>{server}</td>
                            <td>8080</td>
                            <td>10.142.0.2</td>
-                           <td><i className="fa fa-circle" style={{color:"green"}} aria-hidden="true"></i></td>
+                           <td><i id={server + "_status"} className="fa fa-circle" style={{color:"white"}} aria-hidden="true"></i></td>
                          </tr>);
         });
 
@@ -80,7 +82,33 @@ var ServerTable = React.createClass({
                     {trArray}
                   </tbody>
               </table>
+    },
+    componentDidMount: function() {
+        this.timeoutHandler = setTimeout(this.timeoutCallback, 500);
+        console.log("Timeout " + this.timeoutHandler + " created");
+    },
+    timeoutCallback: function() {
+        clearTimeout(this.timeoutHandler);
+        let self = this;
+        self.servers.forEach(function(server){
+            let url = "http://" + server + ":8080/"
+            console.log("pinging " + url + "...");
+            springBootAppService.getUrlResponse(url).then(function(response){
+                console.log(response);
+                $("#" + server + "_status").css("color", "green");
+            }).caught(function(err){
+                console.log(err);
+                $("#" + server + "_status").css("color", "red");
+            }).lastly(function(){
+                self.timeoutHandler = setTimeout(self.timeoutCallback, 5000);
+            });
+        });
+    },
+    componentWillUnmount: function() {
+        console.log("Clearing timeout " + this.timeoutHandler);
+        clearTimeout(this.timeoutHandler);
     }
+
 });
 
 var ToggleButton = React.createClass({

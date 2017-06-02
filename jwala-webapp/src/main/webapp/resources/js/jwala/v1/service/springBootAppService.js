@@ -20,5 +20,8 @@ var springBootAppService = {
     },
     deleteSpringBootApp: function(name) {
         return serviceFoundation.promisedDel("v1.0/springboot/" + encodeURIComponent(name), "json");
+    },
+    getUrlResponse: function(url) {
+        return serviceFoundation.promisedGet("v1.0/springboot/url?val=" + encodeURIComponent(url), "json");
     }
 };

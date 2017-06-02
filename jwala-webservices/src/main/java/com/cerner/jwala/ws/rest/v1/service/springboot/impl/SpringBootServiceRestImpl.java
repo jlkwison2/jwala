@@ -7,6 +7,10 @@ import com.cerner.jwala.ws.rest.v1.response.ResponseBuilder;
 import com.cerner.jwala.ws.rest.v1.service.springboot.SpringBootServiceRest;
 import org.apache.commons.io.IOUtils;
 import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,5 +122,17 @@ public class SpringBootServiceRestImpl implements SpringBootServiceRest {
     @Override
     public Response findSpringBootApp(Long id) {
         return  ResponseBuilder.ok(springBootService.find(id));
+    }
+
+    @Override
+    public Response getUrlResponse(final String url) {
+        try {
+            HttpClient client = new DefaultHttpClient();
+            HttpGet request = new HttpGet(url);
+            HttpResponse response = client.execute(request);
+            return Response.status(Response.Status.NO_CONTENT).build();
+        } catch (final IOException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+        }
     }
 }
