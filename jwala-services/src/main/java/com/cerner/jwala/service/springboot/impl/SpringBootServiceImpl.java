@@ -91,6 +91,11 @@ public class SpringBootServiceImpl implements SpringBootService {
         return springBootApp;
     }
 
+    private void deleteExistingService(String hostname, String name) {
+        binaryDistributionService.runCommand(hostname, "net stop " + name);
+        binaryDistributionService.runCommand(hostname, "sc delete " + name);
+    }
+
     private void installSpringBootApp(String hostname, JpaSpringBootApp springBootApp) {
         final String name = springBootApp.getName();
         LOGGER.info("Install the app {} as a windows service", name);
@@ -104,11 +109,16 @@ public class SpringBootServiceImpl implements SpringBootService {
         LOGGER.info("Distribute the artifacts for the Spring Boot app {}", name);
         String hostNames = springBootApp.getHostNames();
         for (String hostname : Arrays.asList(hostNames.split("\\s*,\\s*"))) {
+            deleteExistingService(hostname, name);
+
             LOGGER.info("Distribute the JDK");
             binaryDistributionService.distributeMedia(name, hostname, new Group[]{}, new ModelMapper().map(springBootApp.getJdkMedia(), Media.class));
 
             String appDestDir = createSpringBootDestDir(name);
             LOGGER.info("Create the parent directory {}", appDestDir);
+            if (binaryDistributionService.remoteFileCheck(hostname, appDestDir)) {
+                binaryDistributionService.backupFile(hostname, appDestDir);
+            }
             binaryDistributionService.remoteCreateDirectory(hostname, appDestDir);
 
             LOGGER.info("Copy the spring boot artifactors from the data/generated directory {}", appGeneratedDir);
@@ -164,6 +174,11 @@ public class SpringBootServiceImpl implements SpringBootService {
         File springBootAppGeneratedDir = new File(generatedDir + "/" + springBootApp.getName());
 
         try {
+            if (springBootAppGeneratedDir.exists()) {
+                File backupDir = new File(springBootAppGeneratedDir + "_" + System.currentTimeMillis());
+                FileUtils.moveDirectory(springBootAppGeneratedDir, backupDir);
+            }
+
             FileUtils.forceMkdir(springBootAppGeneratedDir);
         } catch (IOException e) {
             String errMsg = MessageFormat.format("Failed to make directory {0}", springBootAppGeneratedDir.getAbsolutePath());
