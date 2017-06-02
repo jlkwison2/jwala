@@ -108,6 +108,12 @@ public class BinaryDistributionControlServiceImpl implements BinaryDistributionC
     }
 
     @Override
+    public CommandOutput runCommand(String hostname, String command) {
+        final RemoteCommandReturnInfo remoteCommandReturnInfo = remoteCommandExecutorService.executeCommand(new RemoteExecCommand(getConnection(hostname), new ExecCommand(command)));
+        return new CommandOutput(new ExecReturnCode(remoteCommandReturnInfo.retCode), remoteCommandReturnInfo.standardOuput, remoteCommandReturnInfo.errorOupout);
+    }
+
+    @Override
     public CommandOutput backupFileWithMove(final String hostname, final String remotePath) throws CommandFailureException {
         return executeBackup(hostname, remotePath, MOVE);
     }

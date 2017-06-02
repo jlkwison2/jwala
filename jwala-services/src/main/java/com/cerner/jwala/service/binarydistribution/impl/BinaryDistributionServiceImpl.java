@@ -24,6 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.Arrays;
 
 import static com.cerner.jwala.control.AemControl.Properties.UNZIP_SCRIPT_NAME;
@@ -219,6 +220,19 @@ public class BinaryDistributionServiceImpl implements BinaryDistributionService 
     @Override
     public void backupFile(final String hostname, final String remoteFilePath) {
         binaryDistributionControlService.backupFileWithMove(hostname, remoteFilePath);
+    }
+
+    @Override
+    public boolean runCommand(String hostname, String command) {
+        if (binaryDistributionControlService.runCommand(hostname, command).getReturnCode().wasSuccessful()) {
+            LOGGER.info("Command {} was successful", command);
+        } else {
+            String message = MessageFormat.format("Failed to run command {0}", command);
+            LOGGER.error(message);
+            throw new InternalErrorException(FaultType.REMOTE_COMMAND_FAILURE, message);
+        }
+
+        return true;
     }
 
     /**

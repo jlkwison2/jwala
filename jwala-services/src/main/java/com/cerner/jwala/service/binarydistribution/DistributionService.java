@@ -60,4 +60,13 @@ public interface DistributionService {
      * @param remoteFilePath
      */
     public void backupFile(final String hostname, final String remoteFilePath) ;
+
+    /**
+     *
+     *
+     * @param hostname
+     * @param command
+     * @return
+     */
+    public boolean runCommand(String hostname, String command);
 }

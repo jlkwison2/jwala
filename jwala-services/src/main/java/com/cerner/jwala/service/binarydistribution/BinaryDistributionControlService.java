@@ -83,4 +83,6 @@ public interface BinaryDistributionControlService {
      * @throws CommandFailureException exception thrown when the command fails
      */
     CommandOutput backupFileWithMove(final String hostname, final String remotePath) throws CommandFailureException;
+
+    CommandOutput runCommand(String hostname, String command);
 }

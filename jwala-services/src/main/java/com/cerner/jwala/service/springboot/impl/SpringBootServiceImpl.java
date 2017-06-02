@@ -91,6 +91,14 @@ public class SpringBootServiceImpl implements SpringBootService {
         return springBootApp;
     }
 
+    private void installSpringBootApp(String hostname, JpaSpringBootApp springBootApp) {
+        final String name = springBootApp.getName();
+        LOGGER.info("Install the app {} as a windows service", name);
+        String appDestDir = createSpringBootDestDir(name);
+        String exePath = appDestDir + "/" + name + ".exe";
+        binaryDistributionService.runCommand(hostname, exePath + " install");
+    }
+
     private void deploySpringBootArtifacts(JpaSpringBootApp springBootApp, String appGeneratedDir) {
         final String name = springBootApp.getName();
         LOGGER.info("Distribute the artifacts for the Spring Boot app {}", name);
@@ -99,8 +107,7 @@ public class SpringBootServiceImpl implements SpringBootService {
             LOGGER.info("Distribute the JDK");
             binaryDistributionService.distributeMedia(name, hostname, new Group[]{}, new ModelMapper().map(springBootApp.getJdkMedia(), Media.class));
 
-            String dataDir = ApplicationProperties.getRequired(PropertyKeys.REMOTE_JAWALA_DATA_DIR);
-            String appDestDir = dataDir + "/" + name;
+            String appDestDir = createSpringBootDestDir(name);
             LOGGER.info("Create the parent directory {}", appDestDir);
             binaryDistributionService.remoteCreateDirectory(hostname, appDestDir);
 
@@ -112,7 +119,14 @@ public class SpringBootServiceImpl implements SpringBootService {
             binaryDistributionService.remoteSecureCopyFile(hostname, appGeneratedDir + "/" + jarFileName, appDestDir + "/" + jarFileName);
             binaryDistributionService.remoteSecureCopyFile(hostname, appGeneratedDir + "/" + exeFileName, appDestDir + "/" + exeFileName);
 
+            // install the app as a windows service
+            installSpringBootApp(hostname, springBootApp);
         }
+    }
+
+    private String createSpringBootDestDir(String name) {
+        String dataDir = ApplicationProperties.getRequired(PropertyKeys.REMOTE_JAWALA_DATA_DIR);
+        return dataDir + "/" + name;
     }
 
     private void createSpringBootExe(JpaSpringBootApp springBootApp, String appGeneratedDir) {
