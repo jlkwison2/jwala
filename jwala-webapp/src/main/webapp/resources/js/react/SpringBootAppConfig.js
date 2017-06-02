@@ -205,7 +205,7 @@ var SpringBootAppConfigForm = React.createClass({
     componentDidMount: function() {
         var self = this;
         if (self.validator === null) {
-            self.validator = $(self.refs.form.getDOMNode()).validate({rules:{"jdkMediaId":{"required":true}, "archiveFile":{"required":false}}});
+            self.validator = $(self.refs.form.getDOMNode()).validate({rules:{"jdkMediaId":{"required":true}, "archiveFile":{"required":false}, "gitHubLink":{"required":false}}});
         }
         this.getMedia();
         $(this.refs.springBootAppName.getDOMNode()).focus();
@@ -250,37 +250,3 @@ var SpringBootAppConfigForm = React.createClass({
         this.setState({showUploadBusy: val});
     }
 });
-
-//var MediaTypeDropdown = React.createClass({
-//    getInitialState: function() {
-//        return {selectedMediaType: this.props.selectedMediaType, mediaTypes: []}
-//    },
-//    componentDidMount: function() {
-//        var self = this;
-//        ServiceFactory.getMediaService().getMediaTypes().then(function(response){
-//            self.setState({mediaTypes: response.applicationResponseContent});
-//        });
-//    },
-//    render: function() {
-//        var self = this;
-//        var options = [<option key="no-media" value="">--- Select Media Type ---</option>];
-//        this.state.mediaTypes.forEach(function(mediaType){
-//            if (self.state.selectedMediaType === mediaType.name) {
-//                options.push(<option value={mediaType.name} selected="selected">{mediaType.displayName}</option>);
-//            } else {
-//                options.push(<option value={mediaType.name}>{mediaType.displayName}</option>);
-//            }
-//        });
-//
-//        if (options.length > 0) {
-//            return <select className="mediaTypeSelect" name="type" refs="mediaTypeSelect" onChange={this.onChangeSelect}
-//                           value={this.state.selectedMediaType}>
-//                       {options}
-//                   </select>;
-//        }
-//        return <div>Loading Media Types...</div>
-//    },
-//    onChangeSelect: function(e) {
-//        this.setState({selectedMediaType: this.getDOMNode().value});
-//    }
-//})

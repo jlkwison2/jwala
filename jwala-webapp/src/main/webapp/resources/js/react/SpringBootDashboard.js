@@ -62,6 +62,7 @@ var ServerTable = React.createClass({
     timeoutHandler: null,
     servers: null,
     render: function() {
+
         this.servers = this.props.selectedApp.hostNames.split(",");
         let appName = this.props.selectedApp.name;
         let trArray = [];
@@ -126,13 +127,21 @@ var ServerTable = React.createClass({
                 $("#" + server + "_status").css("color", "red");
                 self.refs[server + "_toggle"].setOn(false);
             }).lastly(function(){
-                self.timeoutHandler = setTimeout(self.timeoutCallback, 5000);
+                self.timeoutHandler = setTimeout(self.timeoutCallback, 2000);
             });
         });
     },
     componentWillUnmount: function() {
         console.log("Clearing timeout " + this.timeoutHandler);
         clearTimeout(this.timeoutHandler);
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        console.log("whoa!");
+        let servers = nextProps.selectedApp.hostNames.split(",");
+        servers.forEach(function(server){
+            setTimeout(function(){$("#" + server + "_status").css("color", "white")}, 150);
+        });
     }
 
 });
@@ -168,7 +177,13 @@ var ToggleButton = React.createClass({
 
     disable: function(val) {
         this.state.disabled(val);
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+        console.log("props");
+        this.setState({on: null});
     }
+
 })
 
 var SelectionMenu = React.createClass({
