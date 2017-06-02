@@ -1,5 +1,5 @@
 var springBootAppService = {
-    getAllSpringBootApp: function(responseCallback) {
+    getAllSpringBootApp: function() {
         return serviceFoundation.promisedGet("v1.0/springboot", "json");
     },
     getSpringBootAppById: function(id) {

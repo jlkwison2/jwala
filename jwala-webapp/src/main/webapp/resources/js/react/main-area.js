@@ -78,7 +78,7 @@ var MainTabs = React.createClass({
         var items = [{title:"Operations", content:<GroupOperations className="group-config"
                                                                    service={ServiceFactory.getGroupService()}
                                                                    statePollTimeout={jwalaVars.statePollTimeout}/>},
-                     {title: "Spring Boot", content:<div>Under Construction...</div>},
+                     {title: "Spring Boot", content:<SpringBootDashboard/>},
                      {title: "Configuration", content:<ConfigureTabs/>,  disabled: !MainArea.isAdminRole},
                      {title: "Admin", content:<AdminTab/>}]
         this.setState({items: items});

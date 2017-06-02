@@ -51,6 +51,9 @@
 <link rel="stylesheet" type="text/css" href="public-resources/css/jquery-ui/button.css">
 <link rel="stylesheet" type="text/css" href="public-resources/css/react/resource-attr-pane.css">
 <link rel="stylesheet" type="text/css" href="public-resources/css/react/resource-pane.css">
+<link rel="stylesheet" type="text/css" href="public-resources/css/react/springboot-dashboard.css">
+<link rel="stylesheet" type="text/css" href="public-resources/css/font-awesome-4.7.0/css/font-awesome.min.css">
+
 
 <jsp:include page="/index-page-scripts?devMode=${devMode}"/>
 
