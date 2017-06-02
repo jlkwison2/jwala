@@ -80,7 +80,25 @@ public class SpringBootServiceImpl implements SpringBootService {
         // create the Spring Boot app jar
         createSpringBootAppJar(springBootApp, appGeneratedDir);
 
+        // create the Spring Boot exe
+        createSpringBootExe(springBootApp, appGeneratedDir);
+
         return springBootApp;
+    }
+
+    private void createSpringBootExe(JpaSpringBootApp springBootApp, String appGeneratedDir) {
+        LOGGER.info("Create Spring Boot .exe for {}", springBootApp.getName());
+
+        try {
+            File appExe = new File(ApplicationProperties.get(PropertyKeys.ROGUE_WINDOWS_EXE_TEMPLATE));
+            final File destFile = new File(appGeneratedDir + File.separator + springBootApp.getName() + ".exe");
+            LOGGER.info("Copying {} to destination {}", appExe.getAbsolutePath(), destFile.getAbsolutePath());
+            FileUtils.copyFile(appExe, destFile);
+        } catch (IOException e) {
+            String errMsg = MessageFormat.format("Failed to create Spring Boot exe for {0}", springBootApp.getName());
+            LOGGER.error(errMsg, e);
+            throw new SpringBootServiceException(errMsg);
+        }
     }
 
     private void createSpringBootAppJar(JpaSpringBootApp springBootApp, String appGeneratedDir) {
