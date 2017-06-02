@@ -1,6 +1,7 @@
 package com.cerner.jwala.service.springboot.impl;
 
-import com.cerner.jwala.common.FileUtility;
+import com.cerner.jwala.common.domain.model.group.Group;
+import com.cerner.jwala.common.domain.model.media.Media;
 import com.cerner.jwala.common.domain.model.springboot.SpringBootApp;
 import com.cerner.jwala.common.properties.ApplicationProperties;
 import com.cerner.jwala.common.properties.PropertyKeys;
@@ -8,6 +9,7 @@ import com.cerner.jwala.dao.MediaDao;
 import com.cerner.jwala.dao.SpringBootAppDao;
 import com.cerner.jwala.persistence.jpa.domain.JpaMedia;
 import com.cerner.jwala.persistence.jpa.domain.JpaSpringBootApp;
+import com.cerner.jwala.service.binarydistribution.BinaryDistributionService;
 import com.cerner.jwala.service.repository.RepositoryService;
 import com.cerner.jwala.service.resource.ResourceContentGeneratorService;
 import com.cerner.jwala.service.resource.impl.ResourceGeneratorType;
@@ -28,6 +30,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -52,8 +55,7 @@ public class SpringBootServiceImpl implements SpringBootService {
     ResourceContentGeneratorService resourceContentGeneratorService;
 
     @Autowired
-    private FileUtility fileUtility;
-
+    private BinaryDistributionService binaryDistributionService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringBootServiceImpl.class);
 
@@ -83,7 +85,34 @@ public class SpringBootServiceImpl implements SpringBootService {
         // create the Spring Boot exe
         createSpringBootExe(springBootApp, appGeneratedDir);
 
+        // deploy the JDK binary
+        deploySpringBootArtifacts(springBootApp, appGeneratedDir);
+
         return springBootApp;
+    }
+
+    private void deploySpringBootArtifacts(JpaSpringBootApp springBootApp, String appGeneratedDir) {
+        final String name = springBootApp.getName();
+        LOGGER.info("Distribute the artifacts for the Spring Boot app {}", name);
+        String hostNames = springBootApp.getHostNames();
+        for (String hostname : Arrays.asList(hostNames.split("\\s*,\\s*"))) {
+            LOGGER.info("Distribute the JDK");
+            binaryDistributionService.distributeMedia(name, hostname, new Group[]{}, new ModelMapper().map(springBootApp.getJdkMedia(), Media.class));
+
+            String dataDir = ApplicationProperties.getRequired(PropertyKeys.REMOTE_JAWALA_DATA_DIR);
+            String appDestDir = dataDir + "/" + name;
+            LOGGER.info("Create the parent directory {}", appDestDir);
+            binaryDistributionService.remoteCreateDirectory(hostname, appDestDir);
+
+            LOGGER.info("Copy the spring boot artifactors from the data/generated directory {}", appGeneratedDir);
+            final String xmlFileName = name + ".xml";
+            final String jarFileName = name + ".jar";
+            final String exeFileName = name + ".exe";
+            binaryDistributionService.remoteSecureCopyFile(hostname, appGeneratedDir + "/" + xmlFileName, appDestDir + "/" + xmlFileName);
+            binaryDistributionService.remoteSecureCopyFile(hostname, appGeneratedDir + "/" + jarFileName, appDestDir + "/" + jarFileName);
+            binaryDistributionService.remoteSecureCopyFile(hostname, appGeneratedDir + "/" + exeFileName, appDestDir + "/" + exeFileName);
+
+        }
     }
 
     private void createSpringBootExe(JpaSpringBootApp springBootApp, String appGeneratedDir) {
@@ -91,7 +120,7 @@ public class SpringBootServiceImpl implements SpringBootService {
 
         try {
             File appExe = new File(ApplicationProperties.get(PropertyKeys.ROGUE_WINDOWS_EXE_TEMPLATE));
-            final File destFile = new File(appGeneratedDir + File.separator + springBootApp.getName() + ".exe");
+            final File destFile = new File(appGeneratedDir + "/" + springBootApp.getName() + ".exe");
             LOGGER.info("Copying {} to destination {}", appExe.getAbsolutePath(), destFile.getAbsolutePath());
             FileUtils.copyFile(appExe, destFile);
         } catch (IOException e) {
@@ -106,7 +135,7 @@ public class SpringBootServiceImpl implements SpringBootService {
         String appFilePath = springBootApp.getArchiveFile();
         try {
             final File srcFile = new File(appFilePath);
-            final File destFile = new File(appGeneratedDir + File.separator + springBootApp.getName() + ".jar");
+            final File destFile = new File(appGeneratedDir + "/" + springBootApp.getName() + ".jar");
             LOGGER.info("Copying {} to destination {}", srcFile.getAbsolutePath(), destFile.getAbsolutePath());
             FileUtils.copyFile(srcFile, destFile);
         } catch (IOException e) {
@@ -118,7 +147,7 @@ public class SpringBootServiceImpl implements SpringBootService {
 
     private String prepareStagingDir(JpaSpringBootApp springBootApp) {
         String generatedDir = ApplicationProperties.get(PropertyKeys.PATHS_GENERATED_RESOURCE_DIR);
-        File springBootAppGeneratedDir = new File(generatedDir + File.separator + springBootApp.getName());
+        File springBootAppGeneratedDir = new File(generatedDir + "/" + springBootApp.getName());
 
         try {
             FileUtils.forceMkdir(springBootAppGeneratedDir);
@@ -143,7 +172,7 @@ public class SpringBootServiceImpl implements SpringBootService {
             String templateContent = resourceContentGeneratorService.generateContent("spring-boot.xml.tpl", springBootXmlTemplateContent, null, new ModelMapper().map(springBootApp, SpringBootApp.class), ResourceGeneratorType.TEMPLATE);
             LOGGER.info(templateContent);
 
-            File springBootXml = new File(appGeneratedDir + File.separator + springBootApp.getName() + ".xml");
+            File springBootXml = new File(appGeneratedDir + "/" + springBootApp.getName() + ".xml");
             try {
                 LOGGER.info("Writing XML content to {}", springBootXml.getAbsolutePath());
                 FileUtils.writeStringToFile(springBootXml, templateContent, StandardCharsets.UTF_8);
