@@ -32,8 +32,8 @@ public interface SpringBootServiceRest {
     Response findSpringBoot(@PathParam("springBootAppName") String springBootAppName);
 
     @PUT
-    @Path("/control/{springBootName}/{command}")
-    Response controlSpringBoot(@PathParam("springBootName") String name, @PathParam("command") String command);
+    @Path("/control/{springBootName}/{command}/{hostname}")
+    Response controlSpringBoot(@PathParam("springBootName") String name, @PathParam("command") String command, @PathParam("hostname") String hostname);
 
     @PUT
     @Path("/generate/{springBootName}")

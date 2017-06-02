@@ -36,9 +36,9 @@ public class SpringBootServiceRestImpl implements SpringBootServiceRest {
     MediaService mediaService;
 
     @Override
-    public Response controlSpringBoot(String name, String command) {
-        LOGGER.info("Control Spring Boot {} with command {}", name, command);
-        return ResponseBuilder.ok(springBootService.controlSpringBoot(name, command));
+    public Response controlSpringBoot(String name, String command, String hostname) {
+        LOGGER.info("Control Spring Boot {} with command {} to host {}", name, command, hostname);
+        return ResponseBuilder.ok(springBootService.controlSpringBoot(name, command, hostname));
     }
 
     @Override

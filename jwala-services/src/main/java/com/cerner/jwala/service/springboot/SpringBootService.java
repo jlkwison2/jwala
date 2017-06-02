@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public interface SpringBootService {
 
-    JpaSpringBootApp controlSpringBoot(String name, String command);
+    JpaSpringBootApp controlSpringBoot(String name, String command, String hostname);
 
     JpaSpringBootApp generateAndDeploy(String name) throws FileNotFoundException;
 

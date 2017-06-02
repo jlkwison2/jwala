@@ -61,8 +61,16 @@ public class SpringBootServiceImpl implements SpringBootService {
 
     @Override
     @Transactional
-    public JpaSpringBootApp controlSpringBoot(String name, String command) {
-        return null;
+    public JpaSpringBootApp controlSpringBoot(String name, String command, String hostname) {
+        LOGGER.info("Run command {} for Spring Boot app {}", command, name);
+        if (binaryDistributionService.runCommand(hostname, "net " + command + " " + name)) {
+            LOGGER.info("Successfully called {} on {}", command, name);
+            return springBootAppDao.find(name);
+        } else {
+            String errMsg = MessageFormat.format("Failed to run command {0} on Spring Boot {1} on host {2}", command, name, hostname);
+            LOGGER.error(errMsg);
+            throw new SpringBootServiceException(errMsg);
+        }
     }
 
     @Override
