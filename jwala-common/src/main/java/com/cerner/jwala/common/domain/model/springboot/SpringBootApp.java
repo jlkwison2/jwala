@@ -53,18 +53,20 @@ public class SpringBootApp {
     private String archiveFileName;
     private String archiveFile;
     private Media jdkMedia;
+    private String gitHunLink;
 
     public SpringBootApp() {
 
     }
 
-    public SpringBootApp(Long id, String name, String hostnames, String archiveFileName, String archiveFile, Media jdkMedia) {
+    public SpringBootApp(Long id, String name, String hostnames, String archiveFileName, String archiveFile, Media jdkMedia, String gitHubLink) {
         this.id = id;
         this.name = name;
         this.hostnames = hostnames;
         this.archiveFile = archiveFile;
         this.archiveFileName = archiveFileName;
         this.jdkMedia = jdkMedia;
+        this.gitHunLink = gitHubLink;
     }
 
     public String getArchiveFile() {
@@ -73,5 +75,13 @@ public class SpringBootApp {
 
     public void setArchiveFile(String archiveFile) {
         this.archiveFile = archiveFile;
+    }
+
+    public String getGitHunLink() {
+        return gitHunLink;
+    }
+
+    public void setGitHunLink(String gitHunLink) {
+        this.gitHunLink = gitHunLink;
     }
 }

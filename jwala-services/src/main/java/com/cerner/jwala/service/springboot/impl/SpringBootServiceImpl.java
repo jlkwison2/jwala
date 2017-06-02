@@ -17,6 +17,9 @@ import com.cerner.jwala.service.springboot.SpringBootService;
 import com.cerner.jwala.service.springboot.SpringBootServiceException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.maven.shared.invoker.*;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,15 +102,70 @@ public class SpringBootServiceImpl implements SpringBootService {
         return springBootApp;
     }
 
+    private void createJarFromGit(String gitUrl, String name, String appGeneratedDir) {
+        LOGGER.info("The gitUri {}", gitUrl);
+        File gitDestFile = new File(appGeneratedDir + "/clone");
+        try {
+            LOGGER.info("The name {}", name);
+            Git git = Git.cloneRepository()
+                    .setURI(gitUrl)
+                    .setDirectory(gitDestFile)
+                    .call();
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+        }
+
+        //  do a mvn build
+        InvocationRequest request = new DefaultInvocationRequest();
+        LOGGER.info("first");
+        // request.getBaseDirectory();
+        request.setPomFile(new File(gitDestFile.getAbsolutePath() + "/pom.xml"));
+        LOGGER.info("second");
+        request.setGoals(Arrays.asList("clean", "package"));
+
+        Invoker invoker = new DefaultInvoker();
+        invoker.setMavenHome(new File(System.getenv("M2_HOME")));
+        try {
+            invoker.execute(request);
+        } catch (MavenInvocationException e) {
+            String errMsg = MessageFormat.format("Failed to build maven project from {0}", gitUrl);
+            LOGGER.error(errMsg, e);
+            throw new SpringBootServiceException(errMsg);
+        }
+
+        // your directory
+        File[] matchingFiles = new File(gitDestFile + "/target").listFiles((dir, name1) -> name1.endsWith(".jar"));
+        String appFilePath = "";
+        if (matchingFiles.length == 1) {
+            appFilePath = matchingFiles[0].getAbsolutePath();
+        } else {
+            String errMsg = MessageFormat.format("Expecting only 1 file for the Spring boot jar from Git URL after running maven build: {0}", gitUrl);
+            LOGGER.error(errMsg);
+            throw new SpringBootServiceException(errMsg);
+        }
+
+        // copy the jar
+        try {
+            final File srcFile = new File(appFilePath);
+            final File destFile = new File(appGeneratedDir + "/" + name + ".jar");
+            LOGGER.info("Copying {} to destination {}", srcFile.getAbsolutePath(), destFile.getAbsolutePath());
+            FileUtils.copyFile(srcFile, destFile);
+        } catch (IOException e) {
+            String errMsg = MessageFormat.format("Failed to copy {0} to jar file", appFilePath);
+            LOGGER.error(errMsg, e);
+            throw new SpringBootServiceException(errMsg);
+        }
+    }
+
     private void deleteExistingService(String hostname, String name) {
-        binaryDistributionService.runCommand(hostname, "net stop " + name);
-        binaryDistributionService.runCommand(hostname, "sc delete " + name);
+        binaryDistributionService.runCommandIgnoreFailure(hostname, "net stop " + name);
+        binaryDistributionService.runCommandIgnoreFailure(hostname, "sc delete " + name);
     }
 
     private void installSpringBootApp(String hostname, JpaSpringBootApp springBootApp) {
         final String name = springBootApp.getName();
         LOGGER.info("Install the app {} as a windows service", name);
-        String appDestDir = createSpringBootDestDir(name);
+        String appDestDir = getSpringBootDestDir(name);
         String exePath = appDestDir + "/" + name + ".exe";
         binaryDistributionService.runCommand(hostname, exePath + " install");
     }
@@ -122,7 +180,7 @@ public class SpringBootServiceImpl implements SpringBootService {
             LOGGER.info("Distribute the JDK");
             binaryDistributionService.distributeMedia(name, hostname, new Group[]{}, new ModelMapper().map(springBootApp.getJdkMedia(), Media.class));
 
-            String appDestDir = createSpringBootDestDir(name);
+            String appDestDir = getSpringBootDestDir(name);
             LOGGER.info("Create the parent directory {}", appDestDir);
             if (binaryDistributionService.remoteFileCheck(hostname, appDestDir)) {
                 binaryDistributionService.backupFile(hostname, appDestDir);
@@ -142,7 +200,7 @@ public class SpringBootServiceImpl implements SpringBootService {
         }
     }
 
-    private String createSpringBootDestDir(String name) {
+    private String getSpringBootDestDir(String name) {
         String dataDir = ApplicationProperties.getRequired(PropertyKeys.REMOTE_JAWALA_DATA_DIR);
         return dataDir + "/" + name;
     }
@@ -164,16 +222,21 @@ public class SpringBootServiceImpl implements SpringBootService {
 
     private void createSpringBootAppJar(JpaSpringBootApp springBootApp, String appGeneratedDir) {
         LOGGER.info("Create jar for {} in {}", springBootApp.getName(), appGeneratedDir);
-        String appFilePath = springBootApp.getArchiveFile();
-        try {
-            final File srcFile = new File(appFilePath);
-            final File destFile = new File(appGeneratedDir + "/" + springBootApp.getName() + ".jar");
-            LOGGER.info("Copying {} to destination {}", srcFile.getAbsolutePath(), destFile.getAbsolutePath());
-            FileUtils.copyFile(srcFile, destFile);
-        } catch (IOException e) {
-            String errMsg = MessageFormat.format("Failed to copy {0} to jar file", springBootApp.getArchiveFile());
-            LOGGER.error(errMsg, e);
-            throw new SpringBootServiceException(errMsg);
+
+        if (null != springBootApp.getGitHubLink() && !springBootApp.getGitHubLink().isEmpty()) {
+            createJarFromGit(springBootApp.getGitHubLink(), springBootApp.getName(), appGeneratedDir);
+        } else {
+            String appFilePath = springBootApp.getArchiveFile();
+            try {
+                final File srcFile = new File(appFilePath);
+                final File destFile = new File(appGeneratedDir + "/" + springBootApp.getName() + ".jar");
+                LOGGER.info("Copying {} to destination {}", srcFile.getAbsolutePath(), destFile.getAbsolutePath());
+                FileUtils.copyFile(srcFile, destFile);
+            } catch (IOException e) {
+                String errMsg = MessageFormat.format("Failed to copy {0} to jar file", springBootApp.getArchiveFile());
+                LOGGER.error(errMsg, e);
+                throw new SpringBootServiceException(errMsg);
+            }
         }
     }
 
@@ -234,10 +297,6 @@ public class SpringBootServiceImpl implements SpringBootService {
         springBootApp.setHostNames((String) springBootDataMap.get("hostNames"));
         springBootApp.setJdkMedia((JpaMedia) springBootDataMap.get("jdkMedia"));
 
-        // filename can be the full path or just the name that is why we need to convert it to Paths
-        // to extract the base name e.g. c:/jdk.zip -> jdk.zip or jdk.zip -> jdk.zip
-        final String filename = Paths.get((String) springBootFileDataMap.get("filename")).getFileName().toString();
-
         try {
             springBootAppDao.find(springBootApp.getName());
             final String msg = MessageFormat.format("Spring Boot already exists with name {0}", springBootApp.getName());
@@ -247,9 +306,17 @@ public class SpringBootServiceImpl implements SpringBootService {
             LOGGER.debug("No Spring Boot name conflict, ignoring not found exception for creating Spring Boot app ", e);
         }
 
-        final String uploadedFilePath = repositoryService.upload(filename, (BufferedInputStream) springBootFileDataMap.get("content"));
-        springBootApp.setArchiveFile(uploadedFilePath);
-        springBootApp.setArchiveFilename(filename);
+        final String gitHubLink = (String) springBootDataMap.get("gitHubLink");
+        if (null != gitHubLink && !gitHubLink.isEmpty()) {
+            springBootApp.setGitHubLink(gitHubLink);
+        } else {
+            // filename can be the full path or just the name that is why we need to convert it to Paths
+            // to extract the base name e.g. c:/jdk.zip -> jdk.zip or jdk.zip -> jdk.zip
+            final String filename = Paths.get((String) springBootFileDataMap.get("filename")).getFileName().toString();
+            final String uploadedFilePath = repositoryService.upload(filename, (BufferedInputStream) springBootFileDataMap.get("content"));
+            springBootApp.setArchiveFile(uploadedFilePath);
+            springBootApp.setArchiveFilename(filename);
+        }
 
         return springBootAppDao.create(springBootApp);
     }

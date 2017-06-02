@@ -69,4 +69,6 @@ public interface DistributionService {
      * @return
      */
     public boolean runCommand(String hostname, String command);
+
+    public void runCommandIgnoreFailure(String hostname, String command);
 }

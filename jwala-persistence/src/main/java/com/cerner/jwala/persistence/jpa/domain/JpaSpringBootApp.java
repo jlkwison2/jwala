@@ -36,6 +36,8 @@ public class JpaSpringBootApp  extends AbstractEntity<JpaSpringBootApp> {
 
     private String archiveFile;
 
+    private String gitHubLink;
+
     @OneToOne (targetEntity = JpaMedia.class)
     @JsonDeserialize(using = JpaMediaDeserializer.class)
     private JpaMedia jdkMedia;
@@ -87,5 +89,13 @@ public class JpaSpringBootApp  extends AbstractEntity<JpaSpringBootApp> {
 
     public void setArchiveFile(String archiveFile) {
         this.archiveFile = archiveFile;
+    }
+
+    public String getGitHubLink() {
+        return gitHubLink;
+    }
+
+    public void setGitHubLink(String gitHubLink) {
+        this.gitHubLink = gitHubLink;
     }
 }

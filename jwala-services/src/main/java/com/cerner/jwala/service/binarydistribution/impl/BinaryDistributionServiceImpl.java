@@ -6,6 +6,7 @@ import com.cerner.jwala.common.domain.model.group.Group;
 import com.cerner.jwala.common.domain.model.media.Media;
 import com.cerner.jwala.common.domain.model.ssh.SshConfiguration;
 import com.cerner.jwala.common.exception.InternalErrorException;
+import com.cerner.jwala.common.exec.CommandOutput;
 import com.cerner.jwala.common.properties.ApplicationProperties;
 import com.cerner.jwala.common.properties.PropertyKeys;
 import com.cerner.jwala.exception.CommandFailureException;
@@ -233,6 +234,12 @@ public class BinaryDistributionServiceImpl implements BinaryDistributionService 
         }
 
         return true;
+    }
+
+    @Override
+    public void runCommandIgnoreFailure(String hostname, String command) {
+        CommandOutput output = binaryDistributionControlService.runCommand(hostname, command);
+        LOGGER.info(output.getStandardOutput() + " :: " + output.getStandardError());
     }
 
     /**
