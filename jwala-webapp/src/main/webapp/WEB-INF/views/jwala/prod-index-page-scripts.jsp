@@ -109,6 +109,7 @@
 <script src="gen-public-resources/js/react/error-msg-list.js"></script>
 <script src="gen-public-resources/js/react/XmlPreview.js"></script>
 <script src="gen-public-resources/js/react/MetaDataPreview.js"></script>
+<script src="gen-public-resources/js/react/SpringBootDashboard.js"></script>
 
 <!-- Web sockets and STOMP --->
 <script src="public-resources/js/sockjs-0.3.4.js"></script>
