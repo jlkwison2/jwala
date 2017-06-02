@@ -17,6 +17,7 @@ var SpringBootAppConfig = React.createClass({
                                                 {title: "Name", key: "name", renderCallback: this.springBootAppNameRenderCallback},
                                                 {title: "Hosts", key: "hostNames"},
                                                 {title: "Jar or War File", key: "archiveFilename"},
+                                                {title: "GitHub Link", key: "gitHubLink"},
                                                 {title: "JDK", key: "jdkMedia.name"}]}
                                selectItemCallback={this.selectItemCallback}
                                deselectAllRowsCallback={this.deselectAllRowsCallback}/>
@@ -124,6 +125,7 @@ var SpringBootAppConfig = React.createClass({
                                                 formData["name"] = response.applicationResponseContent.name;
                                                 formData["hostNames"] = response.applicationResponseContent.hostNames;
                                                 formData["jdkMedia"] = response.applicationResponseContent.jdkMedia;
+                                                formData["gitHubLink"] = response.applicationResponseContent.gitHubLink;
                                                 self.refs.modalEditSpringBootAppDlg.show("Edit SpringBoot App", <SpringBootAppConfigForm formData={formData}/>);
                                            })).caught(
                                                 function(response){$.errorAlert(response)
@@ -139,8 +141,9 @@ var SpringBootAppConfigForm = React.createClass({
         var name = this.props.formData && this.props.formData.name ? this.props.formData.name : null;
         var hostNames = this.props.formData && this.props.formData.hostNames ? this.props.formData.hostNames : null;
         var jdkMedia = this.props.formData && this.props.formData.jdkMedia ? this.props.formData.jdkMedia : null;
+        var gitHubLink = this.props.formData && this.props.formData.gitHubLink ? this.props.formData.gitHubLink : null;
 
-        return {name: name, hostNames: hostNames, archiveFilename: "", archiveFile: null, jdkMedia: jdkMedia, showUploadBusy: false, jdkVersions: []};
+        return {name: name, hostNames: hostNames, archiveFilename: "", archiveFile: null, jdkMedia: jdkMedia, gitHubLink: gitHubLink, showUploadBusy: false, jdkVersions: []};
     },
     render: function() {
         var idTextHidden = null;
@@ -170,6 +173,10 @@ var SpringBootAppConfigForm = React.createClass({
                        <label htmlFor="hostNames" className="error"/>
                        <input name="hostNames" type="text" valueLink={this.linkState("hostNames")} maxLength="255" required autoFocus/>
 
+                       <label>GitHub Link</label>
+                       <label htmlFor="gitHubLink" className="error"/>
+                       <input name="gitHubLink" type="text" valueLink={this.linkState("gitHubLink")} maxLength="255" required autoFocus/>
+
                        {archiveFileInput}
 
                        <label>JDK</label>
@@ -198,7 +205,7 @@ var SpringBootAppConfigForm = React.createClass({
     componentDidMount: function() {
         var self = this;
         if (self.validator === null) {
-            self.validator = $(self.refs.form.getDOMNode()).validate({rules:{"jdkMediaId":{"required":true}}});
+            self.validator = $(self.refs.form.getDOMNode()).validate({rules:{"jdkMediaId":{"required":true}, "archiveFile":{"required":false}}});
         }
         this.getMedia();
         $(this.refs.springBootAppName.getDOMNode()).focus();
