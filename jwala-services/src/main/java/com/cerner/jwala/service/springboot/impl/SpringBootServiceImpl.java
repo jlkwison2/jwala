@@ -13,6 +13,7 @@ import com.cerner.jwala.service.resource.ResourceContentGeneratorService;
 import com.cerner.jwala.service.resource.impl.ResourceGeneratorType;
 import com.cerner.jwala.service.springboot.SpringBootService;
 import com.cerner.jwala.service.springboot.SpringBootServiceException;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.NoResultException;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.List;
@@ -64,7 +66,56 @@ public class SpringBootServiceImpl implements SpringBootService {
     @Override
     @Transactional
     public JpaSpringBootApp generateAndDeploy(String name) throws FileNotFoundException {
+        LOGGER.info("Start generate and deploy of Spring Boot app {}", name);
+
         final JpaSpringBootApp springBootApp = springBootAppDao.find(name);
+
+        // create the generated dir
+        String appGeneratedDir = prepareStagingDir(springBootApp);
+        LOGGER.info("Created the generated dir {}", appGeneratedDir);
+
+        // create the XML file
+        createSpringBootXml(springBootApp, appGeneratedDir);
+
+        // create the Spring Boot app jar
+        createSpringBootAppJar(springBootApp, appGeneratedDir);
+
+        return springBootApp;
+    }
+
+    private void createSpringBootAppJar(JpaSpringBootApp springBootApp, String appGeneratedDir) {
+        LOGGER.info("Create jar for {} in {}", springBootApp.getName(), appGeneratedDir);
+        String appFilePath = springBootApp.getArchiveFile();
+        try {
+            final File srcFile = new File(appFilePath);
+            final File destFile = new File(appGeneratedDir + File.separator + springBootApp.getName() + ".jar");
+            LOGGER.info("Copying {} to destination {}", srcFile.getAbsolutePath(), destFile.getAbsolutePath());
+            FileUtils.copyFile(srcFile, destFile);
+        } catch (IOException e) {
+            String errMsg = MessageFormat.format("Failed to copy {0} to jar file", springBootApp.getArchiveFile());
+            LOGGER.error(errMsg, e);
+            throw new SpringBootServiceException(errMsg);
+        }
+    }
+
+    private String prepareStagingDir(JpaSpringBootApp springBootApp) {
+        String generatedDir = ApplicationProperties.get(PropertyKeys.PATHS_GENERATED_RESOURCE_DIR);
+        File springBootAppGeneratedDir = new File(generatedDir + File.separator + springBootApp.getName());
+
+        try {
+            FileUtils.forceMkdir(springBootAppGeneratedDir);
+        } catch (IOException e) {
+            String errMsg = MessageFormat.format("Failed to make directory {0}", springBootAppGeneratedDir.getAbsolutePath());
+            LOGGER.error(errMsg, e);
+            throw new SpringBootServiceException(errMsg);
+        }
+
+        return springBootAppGeneratedDir.getAbsolutePath();
+    }
+
+    private void createSpringBootXml(JpaSpringBootApp springBootApp, String appGeneratedDir) throws FileNotFoundException {
+        LOGGER.info("Creating XML for {}", springBootApp.getName());
+
         InputStream templateData = null;
         try {
             templateData = new FileInputStream(new File(ApplicationProperties.getRequired(PropertyKeys.ROGUE_WINDOWS_XML_TEMPLATE)));
@@ -74,10 +125,19 @@ public class SpringBootServiceImpl implements SpringBootService {
             String templateContent = resourceContentGeneratorService.generateContent("spring-boot.xml.tpl", springBootXmlTemplateContent, null, new ModelMapper().map(springBootApp, SpringBootApp.class), ResourceGeneratorType.TEMPLATE);
             LOGGER.info(templateContent);
 
+            File springBootXml = new File(appGeneratedDir + File.separator + springBootApp.getName() + ".xml");
+            try {
+                LOGGER.info("Writing XML content to {}", springBootXml.getAbsolutePath());
+                FileUtils.writeStringToFile(springBootXml, templateContent, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                String errMsg = MessageFormat.format("Failed to write XML content to {0}.xml", springBootApp.getName());
+                LOGGER.error(errMsg, e);
+                throw new SpringBootServiceException(errMsg);
+            }
+
         } finally {
             IOUtils.closeQuietly(templateData);
         }
-        return springBootApp;
     }
 
     @Override
