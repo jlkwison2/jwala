@@ -104,7 +104,7 @@ var ServerTable = React.createClass({
     onDeployButtonClick: function(name, server) {
         springBootAppService.generateAndDeploySpringBootApp(name)
         .then(function(response){
-
+            $.alert("Successfully deployed " + name);
         }).caught(function(err){
             $.errorAlert(err.responseJSON.message);
         });
