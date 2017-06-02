@@ -73,12 +73,13 @@ var ServerTable = React.createClass({
                            <td>8080</td>
                            <td>10.142.0.2</td>
                            <td><i id={server + "_status"} className="fa fa-circle" style={{color:"white"}} aria-hidden="true"></i></td>
+                           <td><button onClick={self.onDeployButtonClick.bind(self, appName, server)}>Deploy</button></td>
                          </tr>);
         });
 
         return <table>
                   <thead>
-                      <th></th><th>Name</th><th>Port</th><th>Internal IP</th><th>Status</th>
+                      <th></th><th>Name</th><th>Port</th><th>Internal IP</th><th>Status</th><th></th>
                   </thead>
                   <tbody>
                     {trArray}
@@ -86,10 +87,6 @@ var ServerTable = React.createClass({
               </table>
     },
     onToggleButtonClick: function(name, server, on) {
-        console.log(on);
-        console.log(name);
-        console.log(server);
-
         if (on) {
             springBootAppService.startSpringBootApp(name, server).then(function(response){
 
@@ -103,6 +100,14 @@ var ServerTable = React.createClass({
         }).caught(function(err){
         });
 
+    },
+    onDeployButtonClick: function(name, server) {
+        springBootAppService.generateAndDeploySpringBootApp(name)
+        .then(function(response){
+
+        }).caught(function(err){
+            $.errorAlert(err.responseJSON.message);
+        });
     },
     componentDidMount: function() {
         this.timeoutHandler = setTimeout(this.timeoutCallback, 500);

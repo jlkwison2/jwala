@@ -29,5 +29,8 @@ var springBootAppService = {
     },
     stopSpringBootApp: function(name, host) {
         return serviceFoundation.promisedPut("v1.0/springboot/control/" + encodeURIComponent(name) + "/STOP/" + host);
+    },
+    generateAndDeploySpringBootApp: function(name) {
+        return serviceFoundation.promisedPut("v1.0/springboot/generate/" + encodeURIComponent(name));
     }
 };
