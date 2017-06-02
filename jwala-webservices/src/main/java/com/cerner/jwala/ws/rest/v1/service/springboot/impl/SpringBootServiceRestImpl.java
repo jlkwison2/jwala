@@ -114,4 +114,9 @@ public class SpringBootServiceRestImpl implements SpringBootServiceRest {
     public Response findSpringBootApps() {
         return ResponseBuilder.ok(springBootService.findAll());
     }
+
+    @Override
+    public Response findSpringBootApp(Long id) {
+        return  ResponseBuilder.ok(springBootService.find(id));
+    }
 }

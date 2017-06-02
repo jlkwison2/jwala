@@ -24,4 +24,6 @@ public interface SpringBootService {
     JpaSpringBootApp find(String name);
 
     List<JpaSpringBootApp> findAll();
+
+    JpaSpringBootApp find(Long id);
 }

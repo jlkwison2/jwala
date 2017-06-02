@@ -351,4 +351,9 @@ public class SpringBootServiceImpl implements SpringBootService {
     public List<JpaSpringBootApp> findAll() {
         return springBootAppDao.findAll();
     }
+
+    @Override
+    public JpaSpringBootApp find(Long id) {
+        return springBootAppDao.findById(id);
+    }
 }

@@ -41,4 +41,8 @@ public interface SpringBootServiceRest {
 
     @GET
     Response findSpringBootApps();
+
+    @GET
+    @Path("/app/{id}")
+    Response findSpringBootApp(@PathParam("id") Long id);
 }

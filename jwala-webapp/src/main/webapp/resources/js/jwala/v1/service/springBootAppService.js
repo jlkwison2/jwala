@@ -3,7 +3,7 @@ var springBootAppService = {
         return serviceFoundation.promisedGet("v1.0/springboot", "json");
     },
     getSpringBootAppById: function(id) {
-        return serviceFoundation.promisedGet("v1.0/springboot;id=" + id, "json");
+        return serviceFoundation.promisedGet("v1.0/springboot/app/" + id, "json");
     },
     getSpringBootAppByName: function(name, responseCallback) {
         return serviceFoundation.promisedGet("v1.0/springboot;name=" + encodeURIComponent(name), "json");

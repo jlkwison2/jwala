@@ -120,10 +120,10 @@ var SpringBootAppConfig = React.createClass({
         var self = this;
         springBootAppService.getSpringBootAppById(id).then((function(response){
                                                 var formData = {};
-                                                formData["id"] = response.applicationResponseContent[0].id;
-                                                formData["name"] = response.applicationResponseContent[0].name;
-                                                formData["hostNames"] = response.applicationResponseContent[0].hostNames;
-                                                formData["jdkMedia"] = response.applicationResponseContent[0].jdkMedia;
+                                                formData["id"] = response.applicationResponseContent.id;
+                                                formData["name"] = response.applicationResponseContent.name;
+                                                formData["hostNames"] = response.applicationResponseContent.hostNames;
+                                                formData["jdkMedia"] = response.applicationResponseContent.jdkMedia;
                                                 self.refs.modalEditSpringBootAppDlg.show("Edit SpringBoot App", <SpringBootAppConfigForm formData={formData}/>);
                                            })).caught(
                                                 function(response){$.errorAlert(response)
